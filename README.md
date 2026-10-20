@@ -4,9 +4,10 @@ A small, complete app base: guest sign-in, real-time data, sharing, and deploys,
 that a new app might not need.
 
 The Convex deployment runs the backend and also serves the app's files through
-[convex-hosting](https://github.com/samebase/convex-hosting). This repository deploys itself the
-same way: https://little-labrador-46.convex.site is its `main`. One Convex project is the whole
-stack: one deployment, one URL, and one deploy key. The same app on Cloudflare Workers is
+[convex-hosting](https://github.com/samebase/convex-hosting). [Alchemy](https://alchemy.run) with
+[@samebase/alchemy-convex](https://github.com/samebase/alchemy-convex) deploys it: `main` to the
+production deployment, each pull request to a preview. The same app without Alchemy is
+[samebase/base-hosting](https://github.com/samebase/base-hosting), and on Cloudflare Workers
 [samebase/base](https://github.com/samebase/base).
 
 ## Stack
@@ -34,32 +35,31 @@ create todos, see real-time updates, and scan a QR code to open the same list on
 3. Run `pnpm run dev`. Convex asks you to sign in and creates a project with its development
    deployment. On a fresh clone, the first push fails until the first deploy; see
    [First run](#first-run).
-4. Store the project's production deploy key as the repository secret `CONVEX_DEPLOY_KEY`. With the
-   [GitHub CLI](https://cli.github.com/), this keeps the key off the screen:
+4. Set `projectId` in `alchemy.run.ts` to the ID of your Convex project, and add four repository
+   secrets (**Settings**, **Secrets and variables**, **Actions**):
+   - `CONVEX_DEPLOY_KEY`: the production deploy key (Convex dashboard, the production deployment,
+     **Settings**, **General**, **Deploy keys**).
+   - `CONVEX_PREVIEW_DEPLOY_KEY`: the preview deploy key (project settings, **Preview deploy
+     keys**).
+   - `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`: a Cloudflare API token that can edit
+     Workers scripts and the Secrets Store, and its account ID. Alchemy keeps the deploy state,
+     encrypted, in a Worker of that account, which the first run creates.
+
+   With the [GitHub CLI](https://cli.github.com/), this keeps the production key off the screen:
 
    ```sh
-   key=$(npx convex deployment token create "<repository> deploy.yml" --prod) && printf '%s' "$key" | gh secret set CONVEX_DEPLOY_KEY
+   key=$(npx convex deployment token create "<repository> alchemy.yml" --prod) && printf '%s' "$key" | gh secret set CONVEX_DEPLOY_KEY
    ```
 
    On Windows PowerShell:
 
    ```powershell
-   $key = npx convex deployment token create "<repository> deploy.yml" --prod; if ($LASTEXITCODE -eq 0) { $key | gh secret set CONVEX_DEPLOY_KEY }
+   $key = npx convex deployment token create "<repository> alchemy.yml" --prod; if ($LASTEXITCODE -eq 0) { $key | gh secret set CONVEX_DEPLOY_KEY }
    ```
 
-5. Push to `main`, or re-run the first `deploy.yml` run (it shows a notice that no key is set). The
-   run's summary shows the site URL, `https://<deployment>.convex.site`.
-
-Without a terminal, generate the production deploy key in the
-[Convex dashboard](https://dashboard.convex.dev/) (the production deployment, **Settings**,
-**General**, **Deploy keys**) and add it as a repository secret under **Settings**, **Secrets and
-variables**, **Actions**.
-
-Optional previews: store the project's preview deploy key (Convex dashboard, project settings,
-**Preview deploy keys**) as the repository secret `CONVEX_PREVIEW_DEPLOY_KEY`, not as a secret of
-the `preview` environment, because the cleanup job runs outside that environment. Each pull request
-from this repository then deploys to a preview named after its branch, and closing the pull request
-deletes it. Without the key, pull requests deploy nothing.
+5. Push to `main`, or re-run the first `alchemy.yml` run. The first deploy of an existing
+   production deployment that has code stops until it runs once with `--adopt`. The run's log
+   ends with the site URL, `https://<deployment>.convex.site`.
 
 ## Local development
 
@@ -115,12 +115,20 @@ which the first `pnpm run dev` writes; CI passes a placeholder.
 
 ## Deployment contract
 
-`.github/workflows/deploy.yml` deploys each push to `main` with
-[`samebase/convex-hosting/actions/deploy`](https://github.com/samebase/convex-hosting/blob/main/docs/deploy.md#github-actions)
-and `CONVEX_DEPLOY_KEY`. `.github/workflows/preview.yml` deploys each pull request from this repository with
-`actions/preview` and `CONVEX_PREVIEW_DEPLOY_KEY`, and `actions/cleanup` deletes the preview when
-the pull request closes. Both actions run the `deploy` package script. Keep its name, and keep the
-`convex-hosting deploy` command at its end, because `actions/preview` appends `--preview-name`.
+`alchemy.run.ts` is the stack. The stage `main` is the production deployment; any other stage is a
+preview deployment named after the pull request branch, which `alchemy destroy` deletes. The push
+is the `deploy` package script, run by the Convex deployment resource when the functions, the
+build inputs, `package.json`, or the lockfile change; an unchanged checkout deploys nothing.
+`.github/workflows/alchemy.yml` deploys each push to `main` with `CONVEX_DEPLOY_KEY`, deploys each
+pull request from this repository with `CONVEX_PREVIEW_DEPLOY_KEY` to a stage made from its branch,
+and destroys that stage when the pull request closes. In CI the state is in Alchemy's Cloudflare
+state store; a local run keeps it in `.alchemy/`, and uses `npx convex login` when no deploy key
+is set:
+
+```sh
+pnpm exec alchemy deploy --stage my-preview
+pnpm exec alchemy destroy --stage my-preview
+```
 
 `pnpm run deploy` runs `npx convex deploy` with the checks, the build, and the upload as its
 `--cmd`, so a failed check stops the release before the push switches the site. Inside that build,
@@ -146,7 +154,7 @@ domains, headers, and the deploy options.
   `convex/http.ts` routes every path to the site.
 - `src/routes/_authed/` holds the pages that need a session; without one they redirect to
   `/signin`.
-- `.github/workflows/deploy.yml` and `.github/workflows/preview.yml` deploy production and previews.
+- `alchemy.run.ts` and `.github/workflows/alchemy.yml` deploy production and previews.
 - `convex/` contains the backend, schema, authentication, and generated Convex bindings.
 - `src/` contains the React application and routes.
 

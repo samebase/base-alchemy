@@ -1,0 +1,72 @@
+# Deploys with Alchemy (alchemy.run.ts). A push to main deploys the stage `main`,
+# the production deployment. A pull request from this repository deploys a stage
+# made from its branch, a preview named after the branch; closing the pull request
+# destroys the stage and deletes the preview. State lives in Alchemy's Cloudflare
+# state store. Only the Alchemy steps get the secrets.
+on:
+  push: { branches: [main] }
+  pull_request: { types: [opened, synchronize, reopened, closed] }
+permissions: { contents: read, pull-requests: write }
+# One run per branch at a time. A closed pull request keeps its head_ref.
+concurrency: { group: "alchemy-${{ github.head_ref || github.ref_name }}", queue: max }
+jobs:
+  alchemy:
+    # Pull requests from forks get no secrets.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name ==
+      github.repository
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      # GitHub.GitHubEnv in alchemy.run.ts reads it for the preview comment. Empty on a push.
+      PULL_REQUEST: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with: { version: 11.1.1 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      # A re-run of an old run must not put older code over newer code.
+      - name: Check that the checkout is the head of the branch
+        if: github.event.action != 'closed'
+        env: { TOKEN: "${{ github.token }}" }
+        run: |
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 | tr -d '\n')
+          head=$(git -c "http.extraheader=AUTHORIZATION: basic $auth" ls-remote origin "refs/heads/$BRANCH" | cut -f1)
+          if [ "$(git rev-parse HEAD)" != "$head" ]; then
+            echo "::error::The checkout is not the head of $BRANCH ($head). Nothing was deployed."
+            exit 1
+          fi
+      # An Alchemy stage allows only letters, digits, "-", and "_". The hash of the branch
+      # keeps two branches apart, such as a/b and a-b, and never yields `main`.
+      - name: Make the pull request stage
+        if: github.event_name == 'pull_request'
+        run: |
+          slug=$(printf '%s' "$BRANCH" | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
+          echo "STAGE=${slug:+$slug-}$(printf '%s' "$BRANCH" | sha256sum | cut -c1-8)" >> "$GITHUB_ENV"
+      - name: Deploy production
+        if: github.event_name == 'push'
+        run: pnpm exec alchemy deploy --stage main --yes --no-input
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Deploy the preview
+        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        run: pnpm exec alchemy deploy --stage "$STAGE" --yes --no-input
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_PREVIEW_DEPLOY_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Destroy the preview
+        if: github.event.action == 'closed'
+        run: pnpm exec alchemy destroy --stage "$STAGE" --yes --no-input
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_PREVIEW_DEPLOY_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GITHUB_TOKEN: ${{ github.token }}
