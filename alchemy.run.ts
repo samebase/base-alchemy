@@ -2,10 +2,11 @@
 // Any other stage is a preview deployment named after the pull request branch
 // (GITHUB_HEAD_REF, or else the stage), which `alchemy destroy` deletes. The
 // push is the `deploy` script: convex-hosting builds the site, sets the Convex
-// Auth keys, uploads the site, and pushes the functions.
+// Auth keys, uploads the site, and pushes the functions. The state of every stage
+// is in the alchemyState component of the production deployment, which
+// convex/convex.config.ts mounts; every run needs CONVEX_STATE_DEPLOY_KEY.
 import * as Convex from "@samebase/alchemy-convex";
 import * as Alchemy from "alchemy";
-import * as Cloudflare from "alchemy/Cloudflare";
 import * as GitHub from "alchemy/GitHub";
 import * as Output from "alchemy/Output";
 import * as RemovalPolicy from "alchemy/RemovalPolicy";
@@ -19,7 +20,7 @@ export default Alchemy.Stack(
   "BaseAlchemy",
   {
     providers: Layer.mergeAll(GitHub.providers(), Convex.providers()),
-    state: process.env["CI"] ? Cloudflare.state() : Alchemy.localState(),
+    state: Convex.state(),
   },
   Effect.gen(function* () {
     const { stage } = yield* Alchemy.Stack;

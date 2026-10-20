@@ -1,8 +1,9 @@
 # Deploys with Alchemy (alchemy.run.ts). A push to main deploys the stage `main`,
 # the production deployment. A pull request from this repository deploys a stage
 # made from its branch, a preview named after the branch; closing the pull request
-# destroys the stage and deletes the preview. State lives in Alchemy's Cloudflare
-# state store. Only the Alchemy steps get the secrets.
+# destroys the stage and deletes the preview. The state of every stage is in the
+# production deployment, which each run reaches with CONVEX_STATE_DEPLOY_KEY. Only
+# the Alchemy steps get the secrets.
 on:
   push: { branches: [main] }
   pull_request: { types: [opened, synchronize, reopened, closed] }
@@ -10,7 +11,8 @@ on:
   # cannot tell an empty production deployment from one with code.
   workflow_dispatch: { inputs: { adopt: { type: boolean, default: false } } }
 permissions: { contents: read, pull-requests: write }
-# One run per branch at a time. A closed pull request keeps its head_ref.
+# One run per stage at a time: the state store has no lock. A closed pull request keeps
+# its head_ref.
 concurrency: { group: "alchemy-${{ github.head_ref || github.ref_name }}", queue: max }
 jobs:
   alchemy:
@@ -56,21 +58,18 @@ jobs:
         env:
           ADOPT: ${{ inputs.adopt && '--adopt' || '' }}
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CONVEX_STATE_DEPLOY_KEY: ${{ secrets.CONVEX_STATE_DEPLOY_KEY }}
       - name: Deploy the preview
         if: github.event_name == 'pull_request' && github.event.action != 'closed'
         run: pnpm exec alchemy deploy --stage "$STAGE" --yes --no-input
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_PREVIEW_DEPLOY_KEY }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CONVEX_STATE_DEPLOY_KEY: ${{ secrets.CONVEX_STATE_DEPLOY_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
       - name: Destroy the preview
         if: github.event.action == 'closed'
         run: pnpm exec alchemy destroy --stage "$STAGE" --yes --no-input
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_PREVIEW_DEPLOY_KEY }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CONVEX_STATE_DEPLOY_KEY: ${{ secrets.CONVEX_STATE_DEPLOY_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
