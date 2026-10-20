@@ -6,7 +6,8 @@ that a new app might not need.
 The Convex deployment runs the backend and also serves the app's files through
 [convex-hosting](https://github.com/samebase/convex-hosting). [Alchemy](https://alchemy.run) with
 [@samebase/alchemy-convex](https://github.com/samebase/alchemy-convex) deploys it: `main` to the
-production deployment, each pull request to a preview. The same app without Alchemy is
+production deployment, each pull request to a preview. This repository deploys itself the same way:
+https://ideal-dolphin-15.convex.site is its `main`. The same app without Alchemy is
 [samebase/base-hosting](https://github.com/samebase/base-hosting), and on Cloudflare Workers
 [samebase/base](https://github.com/samebase/base).
 
