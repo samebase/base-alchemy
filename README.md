@@ -57,9 +57,11 @@ create todos, see real-time updates, and scan a QR code to open the same list on
    $key = npx convex deployment token create "<repository> alchemy.yml" --prod; if ($LASTEXITCODE -eq 0) { $key | gh secret set CONVEX_DEPLOY_KEY }
    ```
 
-5. Push to `main`, or re-run the first `alchemy.yml` run. The first deploy of an existing
-   production deployment that has code stops until it runs once with `--adopt`. The run's log
-   ends with the site URL, `https://<deployment>.convex.site`.
+5. Run `alchemy.yml` once on `main` with **adopt** (the **Actions** tab, or
+   `gh workflow run alchemy.yml -f adopt=true`). A deploy key cannot tell an empty production
+   deployment from one with code, so the first production deploy takes it over only with
+   `--adopt`. Each push to `main` deploys from then on. The run's log ends with the site URL,
+   `https://<deployment>.convex.site`.
 
 ## Local development
 
