@@ -52,22 +52,34 @@ jobs:
         run: |
           slug=$(printf '%s' "$BRANCH" | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
           echo "STAGE=${slug:+$slug-}$(printf '%s' "$BRANCH" | sha256sum | cut -c1-8)" >> "$GITHUB_ENV"
+      # A repository without the keys, such as one just created from this template, deploys nothing
+      # and says so. The preview key counts only for pull requests.
+      - name: Skip without the Convex keys
+        id: keys
+        env:
+          STATE_KEY: ${{ secrets.CONVEX_STATE_DEPLOY_KEY }}
+          STAGE_KEY: ${{ github.event_name == 'pull_request' && secrets.CONVEX_PREVIEW_DEPLOY_KEY || secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          if [ -z "$STATE_KEY" ] || [ -z "$STAGE_KEY" ]; then
+            echo "::notice::No deploy: set CONVEX_DEPLOY_KEY, CONVEX_PREVIEW_DEPLOY_KEY, and CONVEX_STATE_DEPLOY_KEY as repository secrets (README, Deploying)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Deploy production
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: steps.keys.outputs.skip != 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: pnpm exec alchemy deploy --stage main --yes --no-input $ADOPT
         env:
           ADOPT: ${{ inputs.adopt && '--adopt' || '' }}
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
           CONVEX_STATE_DEPLOY_KEY: ${{ secrets.CONVEX_STATE_DEPLOY_KEY }}
       - name: Deploy the preview
-        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        if: steps.keys.outputs.skip != 'true' && github.event_name == 'pull_request' && github.event.action != 'closed'
         run: pnpm exec alchemy deploy --stage "$STAGE" --yes --no-input
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_PREVIEW_DEPLOY_KEY }}
           CONVEX_STATE_DEPLOY_KEY: ${{ secrets.CONVEX_STATE_DEPLOY_KEY }}
           GITHUB_TOKEN: ${{ github.token }}
       - name: Destroy the preview
-        if: github.event.action == 'closed'
+        if: steps.keys.outputs.skip != 'true' && github.event.action == 'closed'
         run: pnpm exec alchemy destroy --stage "$STAGE" --yes --no-input
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_PREVIEW_DEPLOY_KEY }}

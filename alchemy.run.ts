@@ -46,12 +46,14 @@ export default Alchemy.Stack(
 
     const github = yield* GitHub.GitHubEnv;
     if (github?.pr) {
+      // Retained: a closed pull request keeps the comment, as a record of what was deployed; the
+      // preview's URL stops answering when the stage is destroyed.
       yield* GitHub.Comment("PreviewComment", {
         owner: github.owner,
         repository: github.repository,
         issueNumber: github.pr,
         body: Output.interpolate`Preview \`${name}\`: ${deployment.siteUrl}`,
-      });
+      }).pipe(RemovalPolicy.retain());
     }
     return { url: deployment.siteUrl };
   }),
