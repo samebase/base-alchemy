@@ -13,6 +13,7 @@ dist-ssr
 *.local
 .env*
 .convex
+.alchemy/
 convex/.tmp
 
 # Editor directories and files

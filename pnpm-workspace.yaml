@@ -1,5 +1,6 @@
 allowBuilds:
   esbuild: true
+  workerd: false
 overrides:
   # Version floors from samebase/base's supply-chain checks.
   "@hono/node-server": 2.0.10
