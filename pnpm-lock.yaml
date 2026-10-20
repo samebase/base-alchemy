@@ -46,7 +46,7 @@ importers:
         version: 0.13.1(convex@1.47.0(react@19.3.1))
       '@samebase/convex-hosting-tanstack-start':
         specifier: ^0.10.1
-        version: 0.10.1(@convex-dev/auth@2.0.0-beta.0(@standard-schema/spec@1.1.0)(convex@1.47.0(react@19.3.1))(hono@4.13.7)(react@19.3.1)(typescript@6.0.3)(zod@4.6.7))(@convex-dev/react-query@0.1.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(convex@1.47.0(react@19.3.1)))(@samebase/convex-hosting@0.13.1(convex@1.47.0(react@19.3.1)))(@tanstack/react-router@1.170.45(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@tanstack/react-start@1.169.3(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))(esbuild@0.27.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.5))(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))(convex@1.47.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        version: 0.10.2(@convex-dev/auth@2.0.0-beta.0(@standard-schema/spec@1.1.0)(convex@1.47.0(react@19.3.1))(hono@4.13.7)(react@19.3.1)(typescript@6.0.3)(zod@4.6.7))(@convex-dev/react-query@0.1.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(convex@1.47.0(react@19.3.1)))(@samebase/convex-hosting@0.13.1(convex@1.47.0(react@19.3.1)))(@tanstack/react-router@1.170.45(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@tanstack/react-start@1.169.3(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))(esbuild@0.27.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.5))(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))(convex@1.47.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@tailwindcss/vite':
         specifier: ^4.3.0
         version: 4.3.3(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))
@@ -2282,8 +2282,8 @@ packages:
       alchemy: 2.0.0-beta.80
       effect: ^4.0.0
 
-  '@samebase/convex-hosting-tanstack-start@0.10.1':
-    resolution: {integrity: sha512-tH6totb6PO2m1qs3LtsC9AwEwtwgqO01V0Zdlt3ioeS9vrd9kPDvS6xiHvcRUHEtey9aDcFIdoFwY70bfvFtLA==}
+  '@samebase/convex-hosting-tanstack-start@0.10.2':
+    resolution: {integrity: sha512-YH3IQyyr/S4TyC4TyZsIcyoD6g2p7UuwMnhB7YqMKKfZe3IbX9JCz1vF7zH37rz1jpkgMTkYxCZnOSS9/7l2rg==}
     engines: {node: '>=22'}
     peerDependencies:
       '@convex-dev/auth': 2.0.0-beta.0
@@ -6952,7 +6952,7 @@ snapshots:
       alchemy: 2.0.0-beta.80(@effect/platform-node@4.0.5(effect@4.0.5)(redis@6.3.0))(@types/node@24.19.2)(@types/react@19.3.0)(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))(effect@4.0.5)(hono@4.13.7)(typescript@6.0.3)(ws@8.22.0)
       effect: 4.0.5
 
-  '@samebase/convex-hosting-tanstack-start@0.10.1(@convex-dev/auth@2.0.0-beta.0(@standard-schema/spec@1.1.0)(convex@1.47.0(react@19.3.1))(hono@4.13.7)(react@19.3.1)(typescript@6.0.3)(zod@4.6.7))(@convex-dev/react-query@0.1.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(convex@1.47.0(react@19.3.1)))(@samebase/convex-hosting@0.13.1(convex@1.47.0(react@19.3.1)))(@tanstack/react-router@1.170.45(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@tanstack/react-start@1.169.3(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))(esbuild@0.27.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.5))(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))(convex@1.47.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@samebase/convex-hosting-tanstack-start@0.10.2(@convex-dev/auth@2.0.0-beta.0(@standard-schema/spec@1.1.0)(convex@1.47.0(react@19.3.1))(hono@4.13.7)(react@19.3.1)(typescript@6.0.3)(zod@4.6.7))(@convex-dev/react-query@0.1.0(@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1))(convex@1.47.0(react@19.3.1)))(@samebase/convex-hosting@0.13.1(convex@1.47.0(react@19.3.1)))(@tanstack/react-router@1.170.45(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@tanstack/react-start@1.169.3(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))(esbuild@0.27.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.5))(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))(convex@1.47.0(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@tanstack/react-router': 1.170.45(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@tanstack/react-start': 1.169.3(@voidzero-dev/vite-plus-core@0.3.0(@types/node@24.19.2)(esbuild@0.27.0)(jiti@2.7.0)(typescript@6.0.3)(yaml@2.9.1))(esbuild@0.27.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(rolldown@1.2.5)
