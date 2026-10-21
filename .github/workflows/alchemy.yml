@@ -2,13 +2,13 @@
 # the production deployment. A pull request from this repository deploys a stage
 # made from its branch, a preview named after the branch; closing the pull request
 # destroys the stage and deletes the preview. The state of every stage is in the
-# production deployment, which each run reaches with CONVEX_STATE_DEPLOY_KEY. Only
-# the Alchemy steps get the secrets.
+# `alchemy-state` project of the team, under the stack name GITHUB_REPOSITORY.
+# Every run needs only the team token CONVEX_ACCESS_TOKEN; it mints the deploy
+# keys itself. Only the Alchemy steps get the secret.
 on:
   push: { branches: [main] }
   pull_request: { types: [opened, synchronize, reopened, closed] }
-  # Run once on main with adopt to take over the production deployment: a deploy key
-  # cannot tell an empty production deployment from one with code.
+  # Run once on main with adopt to take over a project that exists already with code.
   workflow_dispatch: { inputs: { adopt: { type: boolean, default: false } } }
 permissions: { contents: read, pull-requests: write }
 # One run per stage at a time: the state store has no lock. A closed pull request keeps
@@ -52,16 +52,15 @@ jobs:
         run: |
           slug=$(printf '%s' "$BRANCH" | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
           echo "STAGE=${slug:+$slug-}$(printf '%s' "$BRANCH" | sha256sum | cut -c1-8)" >> "$GITHUB_ENV"
-      # A repository without the keys, such as one just created from this template, deploys nothing
-      # and says so. The preview key counts only for pull requests.
-      - name: Skip without the Convex keys
+      # A repository without the token, such as one just created from this template, deploys nothing
+      # and says so.
+      - name: Skip without the Convex token
         id: keys
         env:
-          STATE_KEY: ${{ secrets.CONVEX_STATE_DEPLOY_KEY }}
-          STAGE_KEY: ${{ github.event_name == 'pull_request' && secrets.CONVEX_PREVIEW_DEPLOY_KEY || secrets.CONVEX_DEPLOY_KEY }}
+          TOKEN: ${{ secrets.CONVEX_ACCESS_TOKEN }}
         run: |
-          if [ -z "$STATE_KEY" ] || [ -z "$STAGE_KEY" ]; then
-            echo "::notice::No deploy: set CONVEX_DEPLOY_KEY, CONVEX_PREVIEW_DEPLOY_KEY, and CONVEX_STATE_DEPLOY_KEY as repository secrets (README, Deploying)."
+          if [ -z "$TOKEN" ]; then
+            echo "::notice::No deploy: set CONVEX_ACCESS_TOKEN as a repository secret (README, Start)."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
       - name: Deploy production
@@ -69,19 +68,16 @@ jobs:
         run: pnpm exec alchemy deploy --stage main --yes --no-input $ADOPT
         env:
           ADOPT: ${{ inputs.adopt && '--adopt' || '' }}
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-          CONVEX_STATE_DEPLOY_KEY: ${{ secrets.CONVEX_STATE_DEPLOY_KEY }}
+          CONVEX_ACCESS_TOKEN: ${{ secrets.CONVEX_ACCESS_TOKEN }}
       - name: Deploy the preview
         if: steps.keys.outputs.skip != 'true' && github.event_name == 'pull_request' && github.event.action != 'closed'
         run: pnpm exec alchemy deploy --stage "$STAGE" --yes --no-input
         env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_PREVIEW_DEPLOY_KEY }}
-          CONVEX_STATE_DEPLOY_KEY: ${{ secrets.CONVEX_STATE_DEPLOY_KEY }}
+          CONVEX_ACCESS_TOKEN: ${{ secrets.CONVEX_ACCESS_TOKEN }}
           GITHUB_TOKEN: ${{ github.token }}
       - name: Destroy the preview
         if: steps.keys.outputs.skip != 'true' && github.event.action == 'closed'
         run: pnpm exec alchemy destroy --stage "$STAGE" --yes --no-input
         env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_PREVIEW_DEPLOY_KEY }}
-          CONVEX_STATE_DEPLOY_KEY: ${{ secrets.CONVEX_STATE_DEPLOY_KEY }}
+          CONVEX_ACCESS_TOKEN: ${{ secrets.CONVEX_ACCESS_TOKEN }}
           GITHUB_TOKEN: ${{ github.token }}
