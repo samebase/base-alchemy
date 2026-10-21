@@ -1,8 +1,8 @@
-// Stage `main` is the production deployment of the Convex project of this
-// repository. Any other stage is a preview deployment named after the pull
-// request branch (GITHUB_HEAD_REF, or else the stage), which `alchemy destroy`
-// deletes. The push is the `deploy` script: convex-hosting builds the site,
-// sets the Convex Auth keys, uploads the site, and pushes the functions.
+// Stage `prod` is the production deployment of the Convex project of this
+// repository. Any other stage, such as `pr-42` for a pull request, is a
+// preview deployment named after the stage, which `alchemy destroy` deletes.
+// The push is the `deploy` script: convex-hosting builds the site, sets the
+// Convex Auth keys, uploads the site, and pushes the functions.
 //
 // The stack is named after the repository, `owner/name`, and its Convex
 // project after `name`. The state of every stage is in the `alchemy-state`
@@ -39,29 +39,30 @@ export default Alchemy.Stack(
   },
   Effect.gen(function* () {
     const { stage } = yield* Alchemy.Stack;
-    // scripts/ensure-convex-auth.ts selects a preview by GITHUB_HEAD_REF.
-    const name = process.env["GITHUB_HEAD_REF"] || stage;
     const source = {
       path: "./convex",
       command: ["node", "--run", "deploy"],
       // The build inputs. The functions, package.json, and the lockfile are always hashed.
       include: ["src/**", "public/**", "scripts/**", "vite.config.ts", "tsconfig*.json"],
     } satisfies Convex.Source;
-    // The stage `main` owns the project, and `alchemy destroy --stage main` deletes it with
-    // every deployment. A preview stage reads the project from the state of `main`.
+    // The stage `prod` owns the project, and `alchemy destroy --stage prod` deletes it with
+    // every deployment. A preview stage reads the project from the state of `prod`.
     const project =
-      stage === "main"
+      stage === "prod"
         ? yield* Convex.Project("Project", {
             team,
             name: repository.slice(repository.indexOf("/") + 1),
           }).pipe(RemovalPolicy.destroy())
-        : yield* Convex.Project.ref("Project", { stage: "main" });
+        : yield* Convex.Project.ref("Project", { stage: "prod" });
     const deployment =
-      stage === "main"
+      stage === "prod"
         ? yield* Convex.Deployment("Deployment", { project, type: "prod", source })
-        : yield* Convex.Deployment("Deployment", { project, type: "preview", name, source }).pipe(
-            RemovalPolicy.destroy(),
-          );
+        : yield* Convex.Deployment("Deployment", {
+            project,
+            type: "preview",
+            name: stage,
+            source,
+          }).pipe(RemovalPolicy.destroy());
 
     const github = yield* GitHub.GitHubEnv;
     if (github?.pr) {
@@ -71,7 +72,7 @@ export default Alchemy.Stack(
         owner: github.owner,
         repository: github.repository,
         issueNumber: github.pr,
-        body: Output.interpolate`Preview \`${name}\`: ${deployment.siteUrl}`,
+        body: Output.interpolate`Preview \`${stage}\`: ${deployment.siteUrl}`,
       }).pipe(RemovalPolicy.retain());
     }
     return { url: deployment.siteUrl };

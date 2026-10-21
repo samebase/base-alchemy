@@ -6,8 +6,9 @@ that a new app might not need.
 The Convex deployment runs the backend and also serves the app's files through
 [convex-hosting](https://github.com/samebase/convex-hosting). [Alchemy](https://alchemy.run) with
 [@samebase/alchemy-convex](https://github.com/samebase/alchemy-convex) deploys it: `main` to the
-production deployment, each pull request to a preview. This repository deploys itself the same way:
-https://ideal-dolphin-15.convex.site is its `main`. The same app without Alchemy is
+stage `prod`, the production deployment, and each pull request to the stage `pr-<number>`, a
+preview. This repository deploys itself the same way: https://ideal-dolphin-15.convex.site is its
+`prod`. The same app without Alchemy is
 [samebase/base-hosting](https://github.com/samebase/base-hosting), and on Cloudflare Workers
 [samebase/base](https://github.com/samebase/base).
 
@@ -43,13 +44,13 @@ create todos, see real-time updates, and scan a QR code to open the same list on
    `gh secret set CONVEX_ACCESS_TOKEN`, which asks for the pasted value without showing it. The
    token creates the Convex project of the repository, the state project `alchemy-state` of the
    team, and the short-lived deploy keys of each run. No deploy key is stored anywhere.
-5. Push to `main`, or run `alchemy.yml` from the **Actions** tab. The first run creates the
-   project, named after the repository, with its production deployment, pushes to it, and keeps the
-   state of the stage `main` in `alchemy-state`. Each push to `main` deploys from then on, and each
-   pull request deploys a preview. The run's log ends with the site URL,
-   `https://<deployment>.convex.site`. When the team has a project with the name of the repository
-   already, such as one that `pnpm run dev` created, the first run stops: run `alchemy.yml` once
-   with **adopt** (`gh workflow run alchemy.yml -f adopt=true`) to take it over.
+5. Push to `main`, or run `alchemy.yml` from the **Actions** tab. The first run creates the project,
+   named after the repository, with its production deployment, pushes to it, and keeps the state of
+   the stage `prod` in `alchemy-state`. Each push to `main` deploys from then on, and each pull
+   request deploys the preview `pr-<number>` and comments its URL on the pull request. The run's log
+   ends with the site URL, `https://<deployment>.convex.site`. When the team has a project with the
+   name of the repository already, such as one that `pnpm run dev` created, the first run stops: run
+   `alchemy.yml` once with **adopt** (`gh workflow run alchemy.yml -f adopt=true`) to take it over.
 
 ## Local development
 
@@ -105,19 +106,21 @@ which the first `pnpm run dev` writes; CI passes a placeholder.
 
 ## Deployment contract
 
-`alchemy.run.ts` is the stack. The stage `main` is the production deployment; any other stage is a
-preview deployment named after the pull request branch, which `alchemy destroy` deletes. The push
-is the `deploy` package script, run by the Convex deployment resource when the functions, the
-build inputs, `package.json`, or the lockfile change; an unchanged checkout deploys nothing.
-`.github/workflows/alchemy.yml` deploys each push to `main`, deploys each pull request from this
-repository to a stage made from its branch, and destroys that stage when the pull request closes,
-all with the team token `CONVEX_ACCESS_TOKEN`. The stack is named after the repository,
-`owner/name` (`GITHUB_REPOSITORY`, or the origin remote on a laptop), and so is its Convex
-project. Every run, in CI or local, keeps the state of its stage in the `alchemy-state` project of
-the team, which the first run creates, under the stack name; the stage `main` owns the project,
-and `alchemy destroy --stage main` deletes it. The state has no lock, so the workflow runs one
-deploy of a stage at a time. A local run uses `npx convex login` when `CONVEX_ACCESS_TOKEN` is not
-set:
+`alchemy.run.ts` is the stack. The stage `prod` is the production deployment; any other stage is a
+preview deployment named after the stage, which `alchemy destroy` deletes. The push is the `deploy`
+package script, run by the Convex deployment resource when the functions, the build inputs,
+`package.json`, or the lockfile change; an unchanged checkout deploys nothing.
+`.github/workflows/alchemy.yml` names the stages as
+[Alchemy's CI guide](https://alchemy.run/environments/ci) does: it deploys each push to `main` to
+the stage `prod`, deploys each pull request from this repository to the stage `pr-<number>`, a
+preview deployment with that name whose URL, `https://<deployment>.convex.site`, the run comments on
+the pull request, and destroys that stage when the pull request closes, all with the team token
+`CONVEX_ACCESS_TOKEN`. The stack is named after the repository, `owner/name` (`GITHUB_REPOSITORY`,
+or the origin remote on a laptop), and so is its Convex project. Every run, in CI or local, keeps
+the state of its stage in the `alchemy-state` project of the team, which the first run creates,
+under the stack name; the stage `prod` owns the project, and `alchemy destroy --stage prod` deletes
+it. The state has no lock, so the workflow runs one deploy of a stage at a time. A local run uses
+`npx convex login` when `CONVEX_ACCESS_TOKEN` is not set:
 
 ```sh
 pnpm exec alchemy deploy --stage my-preview
@@ -137,6 +140,31 @@ build prerenders `/about` into a file, served at `/about` (`--html-handling drop
 The files follow Cloudflare's static asset rules. See the
 [convex-hosting documentation](https://github.com/samebase/convex-hosting#documentation) for custom
 domains, headers, and the deploy options.
+
+### Renaming the production stage
+
+A repository that deployed production as the stage `main`, before this template named it `prod`,
+moves it once:
+
+1. Run `alchemy.yml` on `main` with **adopt** (`gh workflow run alchemy.yml -f adopt=true`). The
+   stage `prod` takes over the existing project and production deployment and pushes to it; nothing
+   is created or deleted.
+2. Delete the state of the stage `main`, and only its state. Never run
+   `alchemy destroy --stage main`: it deletes the project, which is also the project of `prod`.
+   `alchemy state delete <stack>/main --recursive` cannot do it either, because it splits its path
+   at each `/` and the stack name `owner/name` has one. Run the state store's `removeStack`
+   mutation, signed in with `npx convex login`:
+
+   ```sh
+   npx convex run --deployment <team>:alchemy-state:prod state:removeStack "{stack: 'owner/name', stage: 'main'}"
+   ```
+
+3. Check the stages that are left; the list has `prod` and the `pr-<number>` stages of open pull
+   requests:
+
+   ```sh
+   npx convex run --deployment <team>:alchemy-state:prod state:stages "{stack: 'owner/name'}"
+   ```
 
 ## Important files
 
