@@ -1,7 +1,7 @@
-# Deploys with Alchemy (alchemy.run.ts). A push to main deploys the stage `main`,
-# the production deployment. A pull request from this repository deploys a stage
-# made from its branch, a preview named after the branch; closing the pull request
-# destroys the stage and deletes the preview. The state of every stage is in the
+# Deploys with Alchemy (alchemy.run.ts). A push to main deploys the stage `prod`,
+# the production deployment. A pull request from this repository deploys the stage
+# `pr-<number>`, a preview with that name; closing the pull request destroys the
+# stage and deletes the preview. The state of every stage is in the
 # `alchemy-state` project of the team, under the stack name GITHUB_REPOSITORY.
 # Every run needs only the team token CONVEX_ACCESS_TOKEN; it mints the deploy
 # keys itself. Only the Alchemy steps get the secret.
@@ -23,6 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BRANCH: ${{ github.head_ref || github.ref_name }}
+      # The stage, as https://alchemy.run/environments/ci names it: `pr-<number>` for a pull
+      # request, `prod` on main, and the branch name otherwise, where no step below deploys.
+      STAGE: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || (github.ref == 'refs/heads/main' && 'prod' || github.ref_name) }}
       # GitHub.GitHubEnv in alchemy.run.ts reads it for the preview comment. Empty on a push.
       PULL_REQUEST: ${{ github.event.pull_request.number }}
     steps:
@@ -46,13 +49,6 @@ jobs:
             echo "::error::The checkout is not the head of $BRANCH ($head). Nothing was deployed."
             exit 1
           fi
-      # An Alchemy stage allows only letters, digits, "-", and "_". The hash of the branch
-      # keeps two branches apart, such as a/b and a-b, and never yields `main`.
-      - name: Make the pull request stage
-        if: github.event_name == 'pull_request'
-        run: |
-          slug=$(printf '%s' "$BRANCH" | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')
-          echo "STAGE=${slug:+$slug-}$(printf '%s' "$BRANCH" | sha256sum | cut -c1-8)" >> "$GITHUB_ENV"
       # A repository without the token, such as one just created from this template, deploys nothing
       # and says so.
       - name: Skip without the Convex token
@@ -66,7 +62,7 @@ jobs:
           fi
       - name: Deploy production
         if: steps.keys.outputs.skip != 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        run: pnpm exec alchemy deploy --stage main --yes --no-input $ADOPT
+        run: pnpm exec alchemy deploy --stage "$STAGE" --yes --no-input $ADOPT
         env:
           ADOPT: ${{ inputs.adopt && '--adopt' || '' }}
           CONVEX_ACCESS_TOKEN: ${{ secrets.CONVEX_ACCESS_TOKEN }}
