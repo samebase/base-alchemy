@@ -8,7 +8,8 @@
 on:
   push: { branches: [main] }
   pull_request: { types: [opened, synchronize, reopened, closed] }
-  # Run once on main with adopt to take over a project that exists already with code.
+  # Run once on main with adopt to take over a project with the name of the repository that
+  # exists already.
   workflow_dispatch: { inputs: { adopt: { type: boolean, default: false } } }
 permissions: { contents: read, pull-requests: write }
 # One run per stage at a time: the state store has no lock. A closed pull request keeps

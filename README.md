@@ -47,9 +47,9 @@ create todos, see real-time updates, and scan a QR code to open the same list on
    project, named after the repository, with its production deployment, pushes to it, and keeps the
    state of the stage `main` in `alchemy-state`. Each push to `main` deploys from then on, and each
    pull request deploys a preview. The run's log ends with the site URL,
-   `https://<deployment>.convex.site`. When a project with the name of the repository exists
-   already, with code, run `alchemy.yml` once with **adopt**
-   (`gh workflow run alchemy.yml -f adopt=true`) to take it over.
+   `https://<deployment>.convex.site`. When the team has a project with the name of the repository
+   already, such as one that `pnpm run dev` created, the first run stops: run `alchemy.yml` once
+   with **adopt** (`gh workflow run alchemy.yml -f adopt=true`) to take it over.
 
 ## Local development
 
@@ -144,8 +144,8 @@ domains, headers, and the deploy options.
 - `vite.config.ts` builds the server for Convex with `convexSsr()` and prerenders `/about`.
 - `src/server.ts` is the server entry: it answers the `/auth` sign-in, refresh, and sign-out routes
   and renders each page with the session of the request's cookies.
-- `convex/convex.config.ts` mounts the Convex Auth, convex-hosting, and Alchemy state components,
-  and `convex/http.ts` routes every path to the site.
+- `convex/convex.config.ts` mounts the Convex Auth and convex-hosting components, and
+  `convex/http.ts` routes every path to the site.
 - `src/routes/_authed/` holds the pages that need a session; without one they redirect to
   `/signin`.
 - `alchemy.run.ts` and `.github/workflows/alchemy.yml` deploy production and previews.
