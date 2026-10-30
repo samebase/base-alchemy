@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@alchemy.run/github": "2.0.0-beta.84",
-    "@effect/platform-node": "4.0.6",
+    "@effect/platform-node": "4.0.5",
     "@samebase/alchemy-convex": "0.16.0",
     "@tanstack/router-plugin": "^1.168.48",
     "@types/node": "^26.6.6",
@@ -59,7 +59,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "alchemy": "2.0.0-beta.84",
-    "effect": "4.0.6",
+    "effect": "4.0.5",
     "shadcn": "4.22.1",
     "typescript": "7.0.2",
     "vite": "catalog:",
