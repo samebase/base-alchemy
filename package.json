@@ -54,7 +54,7 @@
     "@effect/platform-node": "4.0.5",
     "@samebase/alchemy-convex": "0.16.0",
     "@tanstack/router-plugin": "^1.168.23",
-    "@types/node": "^24.0.0",
+    "@types/node": "^26.0.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
