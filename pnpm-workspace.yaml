@@ -7,16 +7,16 @@ overrides:
   "@modelcontextprotocol/sdk": 1.32.1
   "brace-expansion@5": 5.0.12
   browserslist: 4.29.4
-  fast-uri: 3.1.9
+  fast-uri: 4.2.3
   hono: 4.13.13
   ip-address: 10.7.4
-  js-yaml: 4.3.2
-  nanoid: 3.3.20
+  js-yaml: 5.5.0
+  nanoid: 6.0.2
   postcss: "^8.5.23"
   postcss-selector-parser: 7.1.7
   proxy-addr: 2.0.8
   qs: 6.16.1
-  seroval: 1.6.11
+  seroval: 1.7.1
   source-map-js: 1.2.2
   tinypool: 2.2.0
   "undici@7": 7.30.1
@@ -24,9 +24,9 @@ overrides:
   vite: "catalog:"
   vitest: "catalog:"
 catalog:
-  vite: npm:@voidzero-dev/vite-plus-core@0.3.3
-  vitest: 4.1.12
-  vite-plus: 0.3.3
+  vite: npm:@voidzero-dev/vite-plus-core@1.4.0
+  vitest: 5.0.5
+  vite-plus: 1.4.0
 peerDependencyRules:
   allowAny:
     - vite
@@ -34,3 +34,6 @@ peerDependencyRules:
   allowedVersions:
     vite: "*"
     vitest: "*"
+minimumReleaseAgeExclude:
+  # Published 2026-10-30. Remove after 2026-11-06, when it is older than the seven-day release age.
+  - "@samebase/alchemy-convex@0.16.0"
