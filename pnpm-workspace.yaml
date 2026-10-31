@@ -35,5 +35,5 @@ peerDependencyRules:
     vite: "*"
     vitest: "*"
 minimumReleaseAgeExclude:
-  # Published 2026-10-31. Remove after 2026-11-07, when it is older than the seven-day release age.
-  - "@samebase/alchemy-convex@0.19.0"
+  # Our own releases, which this repository may install as soon as they are published.
+  - "@samebase/*"
