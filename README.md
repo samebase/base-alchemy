@@ -37,9 +37,9 @@ create todos, see real-time updates, and scan a QR code to open the same list on
 3. Run `pnpm run dev`. Convex asks you to sign in and creates a project with its development
    deployment. On a fresh clone, the first push fails until the first deploy; see
    [First run](#first-run).
-4. Set `team` in `alchemy.run.ts` to the slug of your Convex team (the first segment of the
-   project URL in the Convex dashboard), and add one repository secret with the
-   [GitHub CLI](https://cli.github.com/): `CONVEX_ACCESS_TOKEN`, a team access token. Generate it
+4. With the [GitHub CLI](https://cli.github.com/), set the repository variable `CONVEX_TEAM_ID` to
+   the slug of your Convex team, the first segment of the project URL in the Convex dashboard
+   (`gh variable set CONVEX_TEAM_ID --body <slug>`), and add one repository secret: `CONVEX_ACCESS_TOKEN`, a team access token. Generate it
    in the Convex dashboard (the team, **Settings**, **Access Tokens**), copy it, and run
    `gh secret set CONVEX_ACCESS_TOKEN`, which asks for the pasted value without showing it. The
    token creates the Convex project of the repository, the state project `alchemy-state-store` of the

@@ -22,6 +22,7 @@ jobs:
       github.repository
     runs-on: ubuntu-latest
     env:
+      CONVEX_TEAM_ID: ${{ vars.CONVEX_TEAM_ID }}
       BRANCH: ${{ github.head_ref || github.ref_name }}
       # The stage, as https://alchemy.run/environments/ci names it: `pr-<number>` for a pull
       # request, `prod` on main, and the branch name otherwise, where no step below deploys.
