@@ -5,7 +5,7 @@
 // Convex Auth keys, uploads the site, and pushes the functions.
 //
 // The stack is named after the repository, `owner/name`, and its Convex
-// project after `name`. The state of every stage is in the `alchemy-state`
+// project after `name`. The state of every stage is in the `alchemy-state-store`
 // project of the team, which Convex.state() creates on the first run. Every
 // run needs the team token CONVEX_ACCESS_TOKEN, or a Convex CLI login
 // (`npx convex login`) on a laptop; it mints the deploy keys itself.
