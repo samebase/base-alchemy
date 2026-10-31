@@ -2,7 +2,7 @@
 # the production deployment. A pull request from this repository deploys the stage
 # `pr-<number>`, a preview with that name; closing the pull request destroys the
 # stage and deletes the preview. The state of every stage is in the
-# `alchemy-state` project of the team, under the stack name GITHUB_REPOSITORY.
+# `alchemy-state-store` project of the team, under the stack name GITHUB_REPOSITORY.
 # Every run needs only the team token CONVEX_ACCESS_TOKEN; it mints the deploy
 # keys itself. Only the Alchemy steps get the secret.
 on:

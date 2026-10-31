@@ -42,11 +42,11 @@ create todos, see real-time updates, and scan a QR code to open the same list on
    [GitHub CLI](https://cli.github.com/): `CONVEX_ACCESS_TOKEN`, a team access token. Generate it
    in the Convex dashboard (the team, **Settings**, **Access Tokens**), copy it, and run
    `gh secret set CONVEX_ACCESS_TOKEN`, which asks for the pasted value without showing it. The
-   token creates the Convex project of the repository, the state project `alchemy-state` of the
+   token creates the Convex project of the repository, the state project `alchemy-state-store` of the
    team, and the short-lived deploy keys of each run. No deploy key is stored anywhere.
 5. Push to `main`, or run `alchemy.yml` from the **Actions** tab. The first run creates the project,
    named after the repository, with its production deployment, pushes to it, and keeps the state of
-   the stage `prod` in `alchemy-state`. Each push to `main` deploys from then on, and each pull
+   the stage `prod` in `alchemy-state-store`. Each push to `main` deploys from then on, and each pull
    request deploys the preview `pr-<number>` and comments its URL on the pull request. The run's log
    ends with the site URL, `https://<deployment>.convex.site`. When the team has a project with the
    name of the repository already, such as one that `pnpm run dev` created, the first run stops: run
@@ -117,7 +117,7 @@ preview deployment with that name whose URL, `https://<deployment>.convex.site`,
 the pull request, and destroys that stage when the pull request closes, all with the team token
 `CONVEX_ACCESS_TOKEN`. The stack is named after the repository, `owner/name` (`GITHUB_REPOSITORY`,
 or the origin remote on a laptop), and so is its Convex project. Every run, in CI or local, keeps
-the state of its stage in the `alchemy-state` project of the team, which the first run creates,
+the state of its stage in the `alchemy-state-store` project of the team, which the first run creates,
 under the stack name; the stage `prod` owns the project, and `alchemy destroy --stage prod` deletes
 it. The state has no lock, so the workflow runs one deploy of a stage at a time. A local run uses
 `npx convex login` when `CONVEX_ACCESS_TOKEN` is not set:
@@ -156,14 +156,14 @@ moves it once:
    mutation, signed in with `npx convex login`:
 
    ```sh
-   npx convex run --deployment <team>:alchemy-state:prod state:removeStack "{stack: 'owner/name', stage: 'main'}"
+   npx convex run --deployment <team>:alchemy-state-store:prod state:removeStack "{stack: 'owner/name', stage: 'main'}"
    ```
 
 3. Check the stages that are left; the list has `prod` and the `pr-<number>` stages of open pull
    requests:
 
    ```sh
-   npx convex run --deployment <team>:alchemy-state:prod state:stages "{stack: 'owner/name'}"
+   npx convex run --deployment <team>:alchemy-state-store:prod state:stages "{stack: 'owner/name'}"
    ```
 
 ## Important files
