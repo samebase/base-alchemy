@@ -13,7 +13,6 @@ import { execFileSync } from "node:child_process";
 import * as GitHub from "@alchemy.run/github";
 import * as Convex from "@samebase/alchemy-convex";
 import * as Alchemy from "alchemy";
-import * as Output from "alchemy/Output";
 import * as RemovalPolicy from "alchemy/RemovalPolicy";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -34,6 +33,7 @@ if (repository === undefined) {
 export default Alchemy.Stack(
   repository,
   {
+    // The GitHub provider has no resource here: it forgets the PreviewComment rows of older previews.
     providers: Layer.mergeAll(GitHub.providers(), Convex.providers()),
     state: Convex.state({ team }),
   },
@@ -64,17 +64,6 @@ export default Alchemy.Stack(
             source,
           }).pipe(RemovalPolicy.destroy());
 
-    const github = yield* GitHub.GitHubEnv;
-    if (github?.pr) {
-      // Retained: a closed pull request keeps the comment, as a record of what was deployed; the
-      // preview's URL stops answering when the stage is destroyed.
-      yield* GitHub.Comment("PreviewComment", {
-        owner: github.owner,
-        repository: github.repository,
-        issueNumber: github.pr,
-        body: Output.interpolate`Preview \`${stage}\`: ${deployment.siteUrl}`,
-      }).pipe(RemovalPolicy.retain());
-    }
     return { url: deployment.siteUrl };
   }),
 );
